@@ -607,15 +607,15 @@ abstract class RestfulEntityBase implements RestfulEntityInterface {
       $save = TRUE;
     }
 
-    if (!$save) {
-      // No request was sent.
-      throw new RestfulBadRequestException('No values were sent with the request');
-    }
-
     if ($original_request) {
       // Request had illegal values.
       $error_message = format_plural(count($original_request), 'Property @names is invalid.', 'Property @names are invalid.', array('@names' => implode(', ', array_keys($original_request))));
       throw new RestfulBadRequestException($error_message);
+    }
+
+    if (!$save) {
+      // No request was sent.
+      throw new RestfulBadRequestException('No values were sent with the request');
     }
 
     $wrapper->save();

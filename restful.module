@@ -178,7 +178,7 @@ function restful_menu_access_callback($major_version, $resource_name) {
     return;
   }
 
-  if (!in_array($_SERVER['REQUEST_METHOD'], array('GET', 'POST', 'PUT', 'DELETE'))) {
+  if (!in_array($_SERVER['REQUEST_METHOD'], array('GET', 'POST', 'PUT', 'PATCH', 'DELETE'))) {
     return;
   }
 
@@ -214,37 +214,48 @@ function restful_menu_process_callback($major_version, $resource_name) {
       break;
 
     case 'post':
+    case 'patch':
+    case 'put':
       $request = $_POST;
   }
 
   // Determine if request was successful.
   $success = FALSE;
 
-  try {
-    $result = $handler->{$method}($path, $request);
-    $success = TRUE;
+  if (method_exists($handler, $method)) {
+    try {
+      $result = $handler->{$method}($path, $request);
+      $success = TRUE;
+    }
+    catch (RestfulException $e) {
+      drupal_add_http_header('Status', $e->getCode());
+      $result = array(
+        'code' => $e->getCode(),
+        'message' => $e->getMessage(),
+        'description' => $e->getDescription(),
+      );
+    }
+    catch (Exception $e) {
+      $result = array(
+        'code' => 500,
+        'message' => $e->getMessage(),
+      );
+    }
+
+    if ($success) {
+      // Allow the handler to change the HTTP headers.
+      foreach ($handler->getHttpHeaders() as $key => $value) {
+        drupal_add_http_header($key, $value);
+      }
+    }
   }
-  catch (RestfulException $e) {
-    drupal_add_http_header('Status', $e->getCode());
+  else {
     $result = array(
-      'code' => $e->getCode(),
-      'message' => $e->getMessage(),
-      'description' => $e->getDescription(),
-    );
-  }
-  catch (Exception $e) {
-    $result = array(
-      'code' => 500,
-      'message' => $e->getMessage(),
+      'code' => 406,
+      'message' => format_string('HTTP Method @method is invalid.', array('@method' => $method)),
     );
   }
 
-  if ($success) {
-    // Allow the handler to change the HTTP headers.
-    foreach ($handler->getHttpHeaders() as $key => $value) {
-      drupal_add_http_header($key, $value);
-    }
-  }
 
   return drupal_json_output($result);
 }
