@@ -82,6 +82,15 @@ function restful_menu() {
       'page arguments' => array(1, 2),
     );
   }
+
+  // Login via HTTP Authorization headers
+  $items['api/login'] = array(
+    'title' => 'Login from HTTP',
+    'description' => 'User login from HTTP authorization headers.',
+    'access callback' => 'restful_api_login_access',
+    'page callback' => 'restful_api_login',
+  );
+
   return $items;
 }
 
@@ -247,4 +256,48 @@ function restful_menu_process_callback($major_version, $resource_name) {
   }
 
   return drupal_json_output($result);
+}
+
+/**
+ * Access callback; Determine if a user can login via API.
+ */
+function restful_api_login_access() {
+  if (user_is_logged_in()) {
+    // User already logged in.
+    return;
+  }
+
+  // Try to fill PHP_AUTH_USER & PHP_AUTH_PW with REDIRECT_HTTP_AUTHORIZATION
+  // for compatibility with Apache PHP CGI/FastCGI.
+  // This requires the following line in your ".htaccess"-File:
+  // RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  if (!empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) && !isset($_SERVER['PHP_AUTH_USER']) && !isset($_SERVER['PHP_AUTH_PW'])) {
+    $authentication = base64_decode(substr($_SERVER['REDIRECT_HTTP_AUTHORIZATION'], 6));
+    list($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']) = explode(':', $authentication);
+  }
+  if (!isset($_SERVER['PHP_AUTH_USER']) || !isset($_SERVER['PHP_AUTH_PW'])) {
+    return;
+  }
+
+  return TRUE;
+}
+
+/**
+ * Page callback; User login from the credentials in the HTTP header.
+ */
+function restful_api_login() {
+  // Login only user names that match a pattern.
+  $form_state = array();
+  $form_state['values']['name'] = $_SERVER['PHP_AUTH_USER'];
+  $form_state['values']['pass'] = $_SERVER['PHP_AUTH_PW'];
+  drupal_form_submit('user_login', $form_state);
+  if (!user_is_anonymous()) {
+    drupal_static_reset();
+  }
+  else {
+    // Clear the login form error and remove the login failure message.
+    $form = &drupal_static('form_set_error', array());
+    $form = array();
+    drupal_get_messages();
+  }
 }

@@ -183,6 +183,20 @@ Will result with an HTTP code 400, and the following JSON:
   * [$wrapper->access() might be wrong for single entity reference field](https://drupal.org/node/2264079#comment-8768581)
   * [Prevent notice in entity_metadata_no_hook_node_access() when node is not saved](https://drupal.org/node/2086225#comment-8768373)
 
-## Credits
+## HTTP Basic Authentication
+This module takes the user name and password from HTTP basic authentication
+headers to perform a Drupal user login. This is useful for authenticating remote
+web service calls with the standard Drupal user access system.
 
-Developed by [Gizra](http://gizra.com)
+### Compatibility with Apache + PHP as CGI/FCGI:
+``PHP_AUTH_USER`` & ``PHP_AUTH_PW`` server variables are not available
+when PHP is run as CGI/FCGI under Apache. However, it is possible to make the
+module work in such an environment by adding the following line to your
+``.htaccess`` file:
+
+``RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]``
+
+
+## Credits
+* Developed by [Gizra](http://gizra.com)
+* The HTTP basic authentication code is heavily copied from RestWs module by [Klausi](https://drupal.org/user/262198)
