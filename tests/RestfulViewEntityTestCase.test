@@ -16,7 +16,7 @@ class RestfulViewEntityTestCase extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('restful_example', 'restful_test', 'entityreference');
+    parent::setUp('restful_test', 'entityreference');
 
     // Text - single.
     $field = array(

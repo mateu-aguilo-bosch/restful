@@ -24,7 +24,6 @@ class RestfulEntityBaseMultipleBundles extends RestfulEntityBase {
 
   public function __construct($plugin) {
     parent::__construct($plugin);
-
     $this->bundles = $plugin['bundles'];
   }
 
@@ -38,30 +37,10 @@ class RestfulEntityBaseMultipleBundles extends RestfulEntityBase {
     return $this->bundles;
   }
 
-  /**
-   * Get a list of entities for each bundle.
-   *
-   * @param null $request
-   *   (optional) The request.
-   * @param null $account
-   *   (optional) The user object.
-   *
-   * @return array
-   *   Array of entities for each bundle, as passed to RestfulEntityBase::viewEntity().
-   *
-   * @throws RestfulBadRequestException
-   */
-  public function getList($request, $account) {
-    $handlers = array();
-    $return = array();
-    foreach ($this->getBundles() as $bundle => $resource) {
-      $handlers[$bundle] = restful_get_restful_handler($resource);
-
-      $results = $handlers[$bundle]->getList($request, $account);
-      $return['list'][$bundle] = $results['list'];
-    }
-
-    return $return;
+  public function getQueryForList($request, $account) {
+    $query = parent::getQueryForList($request, $account);
+    $query->entityCondition('bundle', array_keys($this->getBundles()), 'IN');
+    return $query;
   }
 
 }

@@ -1,0 +1,122 @@
+<?php
+
+/**
+ * @file
+ * Contains RestfulListMultipleBundlesTestCase
+ */
+
+class RestfulListMultipleBundlesTestCase extends DrupalWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'View multiple bundles entities',
+      'description' => 'Test the viewing of an multiple bundles entities.',
+      'group' => 'Restful',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('restful_test', 'entityreference');
+
+    // Text - single.
+    $field = array(
+      'field_name' => 'text_single',
+      'type' => 'text_long',
+      'entity_types' => array('entity_test'),
+      'cardinality' => 1,
+    );
+    field_create_field($field);
+
+    $instance = array(
+      'field_name' => 'text_single',
+      'bundle' => 'main',
+      'entity_type' => 'entity_test',
+      'label' => t('Text single'),
+      'settings' => array(
+        'text_processing' => 1,
+      ),
+    );
+    field_create_instance($instance);
+
+    $instance = array(
+      'field_name' => 'text_single',
+      'bundle' => 'test',
+      'entity_type' => 'entity_test',
+      'label' => t('Text single'),
+      'settings' => array(
+        'text_processing' => 1,
+      ),
+    );
+    field_create_instance($instance);
+  }
+
+  /**
+   * Test viewing an entity (GET method).
+   */
+  function testViewEntity() {
+    $user1 = $this->drupalCreateUser();
+
+    $entity1 = entity_create('entity_test', array('name' => 'main', 'uid' => $user1->uid));
+    $wrapper1 = entity_metadata_wrapper('entity_test', $entity1);
+
+    $text1 = $this->randomName();
+    $wrapper1->text_single->set(array('value' => $text1));
+    $wrapper1->save();
+
+    $entity2 = entity_create('entity_test', array('name' => 'main', 'uid' => $user1->uid));
+    $wrapper2 = entity_metadata_wrapper('entity_test', $entity2);
+
+    $text2 = $this->randomName();
+    $wrapper2->text_single->set(array('value' => $text2));
+    $wrapper2->save();
+
+    $entity3 = entity_create('entity_test', array('name' => 'test', 'uid' => $user1->uid));
+    $wrapper3 = entity_metadata_wrapper('entity_test', $entity3);
+
+    $text3 = $this->randomName();
+    $wrapper3->text_single->set(array('value' => $text3));
+    $wrapper3->save();
+
+    $entity4 = entity_create('entity_test', array('name' => 'test', 'uid' => $user1->uid));
+    $wrapper4 = entity_metadata_wrapper('entity_test', $entity4);
+
+    $text4 = $this->randomName();
+    $wrapper4->text_single->set(array('value' => $text4));
+    $wrapper4->save();
+
+    $id1 = $wrapper1->getIdentifier();
+    $id2 = $wrapper2->getIdentifier();
+    $id3 = $wrapper3->getIdentifier();
+    $id4 = $wrapper4->getIdentifier();
+
+    $base_expected_result = array(
+      array(
+        'id' => $id1,
+        'label' => $text1,
+        'self' => url('custom/' . $id1, array('absolute' => TRUE)),
+      ),
+      array(
+        'id' => $id2,
+        'label' => $text2,
+        'self' => url('custom/' . $id2, array('absolute' => TRUE)),
+      ),
+      array(
+        'id' => $id3,
+        'label' => $text3,
+        'self' => url('custom/' . $id3, array('absolute' => TRUE)),
+      ),
+      array(
+        'id' => $id4,
+        'label' => $text4,
+        'self' => url('custom/' . $id4, array('absolute' => TRUE)),
+      ),
+    );
+
+    // v1.5 - Multiple bundles entities view (id, label, self).
+    $handler = restful_get_restful_handler('entity_tests', 1, 5);
+    $expected_result = $base_expected_result;
+    $result = $handler->get();
+    debug($result);
+    $this->assertEqual($result, $expected_result);
+  }
+}
