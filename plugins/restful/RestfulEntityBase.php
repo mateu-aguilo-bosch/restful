@@ -418,7 +418,7 @@ abstract class RestfulEntityBase extends \RestfulDataProviderEFQ implements \Res
 
 
     if (empty($handlers[$bundle])) {
-      $handlers[$bundle] = restful_get_restful_handler($resource[$bundle]['name'], $resource[$bundle]['major_version'], $resource[$bundle]['minor_version']);
+      $handlers[$bundle] = restful_get_restful_handler($resource[$bundle]['label'], $resource[$bundle]['major_version'], $resource[$bundle]['minor_version']);
     }
     $bundle_handler = $handlers[$bundle];
     return $bundle_handler->viewEntity($id);
@@ -673,7 +673,7 @@ abstract class RestfulEntityBase extends \RestfulDataProviderEFQ implements \Res
 
     // In case we have multiple bundles, we opt for the first one.
     $resource = reset($public_fields[$public_field_name]['resource']);
-    $handler = restful_get_restful_handler($resource['name'], $resource['major_version'], $resource['minor_version']);
+    $handler = restful_get_restful_handler($resource['label'], $resource['major_version'], $resource['minor_version']);
     return $this->createOrUpdateSubResourceItems($handler, $value, $field_info);
   }
 
@@ -1067,7 +1067,7 @@ abstract class RestfulEntityBase extends \RestfulDataProviderEFQ implements \Res
         'discovery' => array(
           // Information about the field for human consumption.
           'info' => array(
-            'name' => t('Label'),
+            'label' => t('Label'),
             'description' => t('The label of the resource.'),
           ),
           // Describe the data.
@@ -1147,7 +1147,7 @@ abstract class RestfulEntityBase extends \RestfulDataProviderEFQ implements \Res
 
         // Set the default value for the version of the referenced resource.
         if (empty($resource['major_version']) || empty($resource['minor_version'])) {
-          list($major_version, $minor_version) = static::getResourceLastVersion($resource['name']);
+          list($major_version, $minor_version) = static::getResourceLastVersion($resource['label']);
           $resource['major_version'] = $major_version;
           $resource['minor_version'] = $minor_version;
         }
