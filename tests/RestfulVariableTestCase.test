@@ -8,13 +8,6 @@
 class RestfulVariableTestCase extends DrupalWebTestCase {
 
   /**
-   * The name of the test table.
-   *
-   * @var string
-   */
-  protected $tableName = 'restful_test_variable';
-
-  /**
    * Provides information about the test class.
    */
   public static function getInfo() {
