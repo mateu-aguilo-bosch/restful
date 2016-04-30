@@ -7,7 +7,7 @@
 
 namespace Drupal\restful\Utility;
 
-use Drupal\restful\Exceptions\ServerConfigurationException;
+use Drupal\restful\Exception\ServerConfigurationException;
 
 /**
  * Class Version.
