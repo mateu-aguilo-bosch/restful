@@ -19,13 +19,19 @@ class VersionManager implements VersionManagerInterface {
    *
    * @var string
    */
-  protected static $productionClass = '\Drupal\restful\Utility\Version';
+  const PRODUCTION_CLASS = '\Drupal\restful\Utility\Version';
+
+  /**
+   * Instantiates a VersionManager object.
+   */
+  public function __construct() {
+  }
 
   /**
    * {@inheritdoc}
    */
   public function createInstance(array $arguments) {
-    return call_user_func_array($this::$productionClass . '::create', $arguments);
+    return call_user_func_array($this::PRODUCTION_CLASS . '::create', $arguments);
   }
 
 }
