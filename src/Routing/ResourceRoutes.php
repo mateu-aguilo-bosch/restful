@@ -76,7 +76,14 @@ class ResourceRoutes extends RouteSubscriberBase {
   }
 
   /**
-   * Add the different routes per method based on the route
+   * Add the different routes per method and format.
+   *
+   * @param RouteCollection $collection
+   *   The collection of routes.
+   * @param ResourceInterface $plugin
+   *   The REST plugin.
+   * @param bool $is_latest
+   *   Boolean indicating if this is the latest version of the resource.
    */
   protected function addRouteVariants(RouteCollection $collection, ResourceInterface $plugin, $is_latest = FALSE) {
     foreach ($plugin->routes() as $name => $route) {

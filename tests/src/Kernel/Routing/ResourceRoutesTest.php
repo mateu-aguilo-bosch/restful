@@ -2,10 +2,10 @@
 
 /**
  * @file
- * Contains \Drupal\Tests\restful\Unit\Routing\ResourceRoutesTest.
+ * Contains \Drupal\Tests\restful\Kernel\Routing\ResourceRoutesTest.
  */
 
-namespace Drupal\Tests\restful\Unit\Routing;
+namespace Drupal\Tests\restful\Kernel\Routing;
 
 use Drupal\restful\Routing\ResourceRoutes;
 use Drupal\Tests\restful\Kernel\RestfulDrupalTestBase;
@@ -51,13 +51,15 @@ class ResourceRoutesTest extends RestfulDrupalTestBase {
     $base_path = $this->getRandomGenerator()->name();
     $entity_type = 'node';
     $bundle = $this->getRandomGenerator()->name();
+    $version = 'v' . (int) mt_rand(1, 10) . '.' . (int) mt_rand(1, 10);
     $this->entityTypeManager->getStorage('resource_config')->create([
-      'id' => 'articles.v1.0',
+      'id' => 'articles.' . $version,
       'contentEntityTypeId' => $entity_type,
+      'version' => $version,
       'contentBundleId' => $bundle,
       'path' => $base_path,
     ])->save();
-    $resource_routes = new ResourceRoutes($this->manager, $this->entityTypeManager, $this->logger);
+    $resource_routes = new ResourceRoutes($this->manager, $this->entityTypeManager, $this->logger, $this->container->get('restful.version_manager'));
     $route_collection = new RouteCollection();
 
     $reflection = new \ReflectionObject($resource_routes);
@@ -73,7 +75,10 @@ class ResourceRoutesTest extends RestfulDrupalTestBase {
           $this->assertEquals('/entity/' . $entity_type, $route->getPath());
         }
         else {
-          $this->assertEquals('/' . $base_path . '/{' . $entity_type . '}', $route->getPath());
+          // Make sure that the path is either prfixed with the route or the
+          // latest version.
+          $valid_path = '/' . $base_path . '/{' . $entity_type . '}' == $route->getPath() || '/' . $version . '/' . $base_path . '/{' . $entity_type . '}' == $route->getPath();
+          $this->assertTrue($valid_path);
           $this->assertEquals($entity_type, $route->getRequirement('_entity_type'));
           $this->assertEquals($bundle, $route->getRequirement('_bundle'));
         }
