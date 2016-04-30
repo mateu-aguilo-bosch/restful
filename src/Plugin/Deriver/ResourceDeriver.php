@@ -84,9 +84,10 @@ class ResourceDeriver implements ContainerDeriverInterface {
           'entity_type' => $entity_type_id,
           'bundle' => $entity->getContentBundleId(),
           'serialization_class' => $entity_type->getClass(),
+          'version' => $entity->getVersion(),
           'label' => $entity->label(),
           'uri_paths' => [
-            'canonical' => sprintf('/%s/{%s}', $entity->getPath(), $entity_type_id),
+            'canonical' => sprintf('/%s/%s/{%s}', $entity->getVersion(), $entity->getPath(), $entity_type_id),
             'https://www.drupal.org/link-relations/create' => "/entity/" . $entity->getContentEntityTypeId(),
           ],
         ];

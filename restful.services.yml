@@ -35,3 +35,5 @@ services:
     arguments: ['@plugin.manager.rest', '@entity_type.manager', '@logger.channel.rest']
     tags:
       - { name: 'event_subscriber' }
+  restful.version_manager:
+    class: Drupal\restful\Utility\VersionManager

@@ -9,6 +9,7 @@ namespace Drupal\restful\Routing;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Routing\RouteSubscriberBase;
+use Drupal\rest\Plugin\ResourceInterface;
 use Drupal\rest\Plugin\Type\ResourcePluginManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Routing\RouteCollection;
@@ -44,8 +45,8 @@ class ResourceRoutes extends RouteSubscriberBase {
    *
    * @param \Drupal\rest\Plugin\Type\ResourcePluginManager $manager
    *   The resource plugin manager.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
-   *   The configuration factory holding resource settings.
+   * @param EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    * @param \Psr\Log\LoggerInterface $logger
    *   A logger instance.
    */
@@ -64,26 +65,44 @@ class ResourceRoutes extends RouteSubscriberBase {
    * @return array
    */
   protected function alterRoutes(RouteCollection $collection) {
-    $enabled_resources = $this->entityTypeManager->getStorage('resource_config')->loadMultiple();
-
+    $storage = $this->entityTypeManager->getStorage('resource_config');
+    $enabled_resources = $storage->loadMultiple();
     // Iterate over all enabled resource plugins.
     foreach ($enabled_resources as $id => $resource_config) {
+      /* @var \Drupal\restful\Plugin\rest\resource\RestfulResource $plugin */
       $plugin = $this->manager->getInstance(['id' => 'restful_entity:' . $id]);
+      $this->addRouteVariants($collection, $plugin, $plugin->isLatest($storage));
+    }
+  }
 
-      foreach ($plugin->routes() as $name => $route) {
-        // @todo: Are multiple methods possible here?
-        $methods = $route->getMethods();
-        // Only expose routes where the method is enabled in the configuration.
-        if ($methods && ($method = $methods[0]) && $method) {
-          $route->setRequirement('_access_rest_csrf', 'TRUE');
-          $definition = $plugin->getPluginDefinition();
-          if ($method != 'POST') {
-            // Make sure that the matched route is for the correct bundle.
-            $route->setRequirement('_entity_type', $definition['entity_type']);
-            $route->setRequirement('_bundle', $definition['bundle']);
-          }
-          // TODO Copy from the Drupal\rest\Routing\ResourceRoutes::alterRoutes.
-          $collection->add("rest.$name", $route);
+  /**
+   * Add the different routes per method based on the route
+   */
+  protected function addRouteVariants(RouteCollection $collection, ResourceInterface $plugin, $is_latest = FALSE) {
+    foreach ($plugin->routes() as $name => $route) {
+      /* @var \Symfony\Component\Routing\Route $route */
+      // @todo: Are multiple methods possible here?
+      $methods = $route->getMethods();
+      // Only expose routes where the method is enabled in the configuration.
+      if ($methods && ($method = $methods[0]) && $method) {
+        $route->setRequirement('_access_rest_csrf', 'TRUE');
+        $definition = $plugin->getPluginDefinition();
+        if ($method != 'POST') {
+          // Make sure that the matched route is for the correct bundle.
+          $route->setRequirement('_entity_type', $definition['entity_type']);
+          $route->setRequirement('_bundle', $definition['bundle']);
+        }
+        $collection->add("rest.$name", $route);
+
+        if ($is_latest) {
+          $new_route = clone $route;
+          // If this is the latest version of the resource we need to re-add the
+          // route without the version prefix.
+          $version = $definition['version'];
+          $new_path = str_replace('/' . $version, '', $new_route->getPath());
+          $new_name = str_replace('.' . $version, '', $name);
+          $new_route->setPath($new_path);
+          $collection->add("rest.$new_name", $new_route);
         }
       }
     }
