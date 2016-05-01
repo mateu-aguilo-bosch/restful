@@ -62,6 +62,7 @@ class RestfulResource extends EntityResource {
   protected function getBaseRoute($canonical_path, $method) {
     $route = parent::getBaseRoute($canonical_path, $method);
 
+    $route->setDefault('_controller', 'Drupal\restful\RequestHandler::handle');
     $route->setRequirement('_permission', 'access RESTful resources');
 
     return $route;
